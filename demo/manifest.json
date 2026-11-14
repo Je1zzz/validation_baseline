@@ -1,0 +1,296 @@
+{
+  "version": "validation-baseline-1",
+  "package_id": "synthetic-demo-v1",
+  "reviewer_id": "演示",
+  "stage": "calibration",
+  "simulated": true,
+  "images": {
+    "i1": "image1.svg",
+    "i2": "image2.svg",
+    "i3": "image3.svg",
+    "i4": "image4.svg"
+  },
+  "tasks": [
+    {
+      "id": "demo-single",
+      "phase": "1 · 形态记录",
+      "title": "记录图像形态",
+      "help": "可在图上标记局部区域。",
+      "panels": [
+        {
+          "label": "图像",
+          "images": [
+            "i1"
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "key": "evaluable",
+          "label": "这张图能否评价？",
+          "type": "choice",
+          "options": {
+            "yes": "可以",
+            "partial": "部分可以",
+            "no": "不能"
+          },
+          "required": true
+        },
+        {
+          "key": "tissue",
+          "label": "主要组织",
+          "type": "choice",
+          "options": {
+            "epithelium": "鳞状上皮",
+            "gland": "腺上皮",
+            "stroma": "间质",
+            "mixed": "混合",
+            "other": "其他",
+            "na": "不确定"
+          },
+          "required": true
+        },
+        {
+          "key": "atypia",
+          "label": "核异型",
+          "type": "choice",
+          "options": {
+            "0": "无明显",
+            "1": "轻度",
+            "2": "中度",
+            "3": "重度",
+            "na": "无法评价"
+          },
+          "required": true
+        },
+        {
+          "key": "maturation",
+          "label": "成熟度丧失",
+          "type": "choice",
+          "options": {
+            "0": "基本保留",
+            "1": "部分紊乱",
+            "2": "明显丧失",
+            "na": "无法评价"
+          },
+          "required": true
+        },
+        {
+          "key": "inflammation",
+          "label": "炎症",
+          "type": "choice",
+          "options": {
+            "0": "无明显",
+            "1": "轻度",
+            "2": "中度",
+            "3": "重度",
+            "na": "无法评价"
+          },
+          "required": true
+        },
+        {
+          "key": "architecture",
+          "label": "结构紊乱（选填）",
+          "type": "choice",
+          "options": {
+            "0": "无明显",
+            "1": "轻度",
+            "2": "中度",
+            "3": "重度",
+            "na": "无法评价"
+          },
+          "required": false
+        },
+        {
+          "key": "severity",
+          "label": "整体异常程度（选填：0 最轻，100 最明显）",
+          "type": "number",
+          "min": 0,
+          "max": 100,
+          "required": false
+        },
+        {
+          "key": "quality",
+          "label": "有无影响评价的因素？",
+          "type": "multi",
+          "options": {
+            "none": "无明显",
+            "focus": "模糊",
+            "fold": "折叠",
+            "stain": "染色",
+            "fragment": "组织缺损",
+            "other": "其他",
+            "uncertain": "不确定"
+          },
+          "required": true
+        }
+      ],
+      "allow_regions": true
+    },
+    {
+      "id": "demo-retrieval",
+      "phase": "2 · 图像相似性",
+      "title": "这两张图有多相似？",
+      "panels": [
+        {
+          "label": "参考",
+          "images": [
+            "i1"
+          ]
+        },
+        {
+          "label": "候选",
+          "images": [
+            "i2"
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "key": "comparable",
+          "label": "组织是否可比较？",
+          "type": "choice",
+          "options": {
+            "yes": "可以",
+            "partial": "部分可以",
+            "no": "不能",
+            "na": "不确定"
+          },
+          "required": true
+        },
+        {
+          "key": "similarity",
+          "label": "形态相似程度",
+          "type": "choice",
+          "options": {
+            "3": "非常相似",
+            "2": "比较相似",
+            "1": "部分相似",
+            "0": "不相似",
+            "na": "无法判断"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "demo-pair",
+      "phase": "3 · 严重程度",
+      "title": "哪一张的异常更明显？",
+      "panels": [
+        {
+          "label": "A",
+          "images": [
+            "i2"
+          ]
+        },
+        {
+          "label": "B",
+          "images": [
+            "i3"
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "key": "overall",
+          "label": "整体异常",
+          "type": "choice",
+          "options": {
+            "A": "A 更明显",
+            "B": "B 更明显",
+            "tie": "相近",
+            "na": "无法比较"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "demo-recognition",
+      "phase": "4 · 形态分组",
+      "title": "候选更接近哪组？",
+      "help": "先看两组参考，再判断候选。",
+      "panels": [
+        {
+          "label": "参考 A",
+          "images": [
+            "i1",
+            "i2"
+          ]
+        },
+        {
+          "label": "参考 B",
+          "images": [
+            "i3",
+            "i4"
+          ]
+        },
+        {
+          "label": "候选",
+          "images": [
+            "i2"
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "key": "group",
+          "label": "候选的形态",
+          "type": "choice",
+          "options": {
+            "A": "更接近 A",
+            "B": "更接近 B",
+            "tie": "都相近",
+            "na": "无法判断"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "demo-atlas",
+      "phase": "5 · 图册评价",
+      "title": "这一组是否有共同形态？",
+      "panels": [
+        {
+          "label": "图像组",
+          "images": [
+            "i1",
+            "i2",
+            "i3",
+            "i4"
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "key": "coherence",
+          "label": "共同形态",
+          "type": "choice",
+          "options": {
+            "3": "明显",
+            "2": "总体有",
+            "1": "较弱",
+            "0": "没有",
+            "na": "无法评价"
+          },
+          "required": true
+        },
+        {
+          "key": "attributes",
+          "label": "主要特点",
+          "type": "multi",
+          "options": {
+            "atypia": "核异型",
+            "maturation": "成熟度",
+            "inflammation": "炎症",
+            "architecture": "结构",
+            "uncertain": "不确定"
+          },
+          "required": true
+        }
+      ]
+    }
+  ]
+}

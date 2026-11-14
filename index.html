@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>病理形态评阅</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><div><strong>病理形态评阅</strong><div class="muted" id="identity">请先打开评阅材料</div></div><div id="progress" aria-live="polite"></div></header>
+  <main>
+    <section id="welcome" class="card welcome">
+      <h1>开始评阅</h1><p>请选择收到的评阅文件夹。评阅过程可暂停，完成后请导出结果交回研究人员。</p>
+      <div class="actions"><label class="primary button">打开评阅文件夹<input id="folder" type="file" webkitdirectory multiple hidden></label><button id="demo">查看演示</button></div>
+      <p class="muted">演示图为示意图，不包含真实病理图像。评阅内容保存在本机，不会自动上传。</p>
+    </section>
+    <section id="workspace" hidden>
+      <div class="bar"><label>评阅组 <select id="phase"></select></label><span id="counter"></span><span class="grow"></span><button id="restore">导入进度</button><input id="restoreFile" type="file" accept="application/json,.json" hidden><button id="export">导出结果</button></div>
+      <div class="layout"><section class="card images"><h1 id="taskTitle"></h1><p id="taskHelp" class="muted"></p><div id="panels"></div><div id="drawControls" class="draw" hidden><label>标记内容 <select id="regionLabel"><option value="lesion">病变相关</option><option value="atypia">核异型</option><option value="maturation">成熟度改变</option><option value="inflammation">炎症</option><option value="architecture">结构改变</option><option value="other">其他</option><option value="uncertain">不确定</option></select></label><button id="startPolygon">开始多边形</button><button id="finishPolygon" disabled>完成</button><button id="undoPoint" disabled>撤销点</button><button id="clearPolygon">清除标记</button><small>在图上依次点击边界，至少标记三个点。</small></div></section>
+        <section class="card questions"><form id="form"></form><label class="notes">备注（选填）<textarea id="notes" maxlength="2000"></textarea></label><p id="error" class="error" role="alert"></p><div class="actions navigation"><button id="previous">上一题</button><button id="skip">暂存跳过</button><span class="grow"></span><button id="next" class="primary">保存并继续</button></div><p id="saveStatus" class="muted" aria-live="polite"></p></section></div>
+    </section>
+  </main>
+  <dialog id="viewer"><div class="viewerbar"><span>图像放大</span><span class="grow"></span><button id="zoomOut" aria-label="缩小">−</button><button id="zoomIn" aria-label="放大">＋</button><button id="closeViewer">关闭</button></div><div class="viewport"><img id="zoomImage" alt="评阅图像放大"></div></dialog>
+  <script src="app.js"></script>
+</body></html>
