@@ -3,6 +3,7 @@ const $ = id => document.getElementById(id);
 let pack, urls = {}, answers = {}, phaseIndex = 0, position = 0, drawing = null, zoom = 1;
 const el = (tag, text, className) => { const x = document.createElement(tag); if (text !== undefined) x.textContent = text; if (className) x.className = className; return x; };
 const storageKey = () => `pathology-review:${pack.package_id}:${pack.reviewer_id}`;
+const completionKey = id => `pathology-review-completed:${id}:${pack.reviewer_id}`;
 const phases = () => [...new Set(pack.tasks.map(t => t.phase))];
 const phaseTasks = () => pack.tasks.filter(t => t.phase === phases()[phaseIndex]);
 const current = () => phaseTasks()[position];
@@ -24,7 +25,7 @@ function validate(t, row) {
 }
 const complete = t => !validate(t, taskAnswers(t));
 function persist() {
-  try { localStorage.setItem(storageKey(), JSON.stringify(answers)); $('saveStatus').textContent = '已保存在当前浏览器'; }
+  try { localStorage.setItem(storageKey(), JSON.stringify(answers)); if (pack.tasks.every(complete)) localStorage.setItem(completionKey(pack.package_id), 'yes'); else localStorage.removeItem(completionKey(pack.package_id)); $('saveStatus').textContent = '已保存在当前浏览器'; }
   catch { $('saveStatus').textContent = '无法自动保存，请及时导出结果'; }
   updateProgress();
 }
@@ -127,6 +128,7 @@ function render() {
   $('notes').value = a.notes || ''; $('error').textContent = ''; $('previous').disabled = position === 0;
   $('phase').value = String(phaseIndex); renderImages(); updateProgress();
 }
+function openWorkspace() { $('welcome').hidden = true; $('prerequisite').hidden = true; $('workspace').hidden = false; render(); }
 function install(manifest, imageUrls) {
   if (manifest.version !== 'validation-baseline-1' || !manifest.package_id || !manifest.reviewer_id || !Array.isArray(manifest.tasks) || !manifest.tasks.length) throw Error('评阅材料格式不正确');
   if (new Set(manifest.tasks.map(t => t.id)).size !== manifest.tasks.length || manifest.tasks.some(t => !t.id || !t.phase || !Array.isArray(t.panels) || !Array.isArray(t.questions) || t.panels.some(p => p.images.some(i => !imageUrls[i])))) throw Error('评阅材料不完整');
@@ -134,8 +136,11 @@ function install(manifest, imageUrls) {
   try { answers = JSON.parse(localStorage.getItem(storageKey()) || '{}'); } catch { answers = {}; }
   $('identity').textContent = `${pack.simulated ? '演示材料' : '独立评阅'} · ${pack.reviewer_id}`;
   $('phase').replaceChildren(); phases().forEach((p, i) => { const o = el('option', p); o.value = String(i); $('phase').append(o); });
-  $('welcome').hidden = true; $('workspace').hidden = false; render();
+  let unlocked = !pack.requires;
+  try { unlocked ||= localStorage.getItem(completionKey(pack.requires.package_id)) === 'yes'; } catch { /* Import the previous export instead. */ }
+  if (unlocked) openWorkspace(); else { $('welcome').hidden = true; $('workspace').hidden = true; $('prerequisite').hidden = false; }
 }
+$('previousResult').onchange = async e => { try { const data = JSON.parse(await e.target.files[0].text()), required = pack.requires; const completed = new Set((data.responses || []).map(r => r.task_id)); if (data.version !== pack.version || data.package_id !== required.package_id || data.reviewer_id !== pack.reviewer_id || data.stage !== pack.stage || !!data.simulated !== !!pack.simulated || !required.task_ids.every(id => completed.has(id))) throw Error('上一组尚未完成或文件不匹配'); try { localStorage.setItem(completionKey(required.package_id), 'yes'); } catch { /* Remains unlocked for this session. */ } openWorkspace(); } catch (err) { $('prerequisiteError').textContent = err.message; } e.target.value = ''; };
 async function loadFolder(files) {
   const manifests = files.filter(f => f.name === 'manifest.json');
   if (manifests.length !== 1) throw Error('请选择包含一个 manifest.json 的完整评阅文件夹');
