@@ -1,6 +1,6 @@
 'use strict';
 const $ = id => document.getElementById(id);
-let pack, urls = {}, answers = {}, phaseIndex = 0, position = 0, drawing = null, zoom = 1;
+let pack, urls = {}, answers = {}, phaseIndex = 0, position = 0, drawing = null, zoom = 1, timing = null;
 const el = (tag, text, className) => { const x = document.createElement(tag); if (text !== undefined) x.textContent = text; if (className) x.className = className; return x; };
 const storageKey = () => `pathology-review:${pack.package_id}:${pack.reviewer_id}`;
 const completionKey = id => `pathology-review-completed:${id}:${pack.reviewer_id}`;
@@ -8,6 +8,13 @@ const phases = () => [...new Set(pack.tasks.map(t => t.phase))];
 const phaseTasks = () => pack.tasks.filter(t => t.phase === phases()[phaseIndex]);
 const current = () => phaseTasks()[position];
 const taskAnswers = t => answers[t.id] || { answer: {}, regions: [] };
+function stopTiming() {
+  if (!timing) return;
+  const row = taskAnswers(timing.task);
+  row.elapsed_ms = (row.elapsed_ms || 0) + Math.max(0, Math.round(performance.now() - timing.started));
+  answers[timing.task.id] = row; timing = null;
+}
+function startTiming(t) { if (t.record_time && !document.hidden) timing = { task: t, started: performance.now() }; }
 function validate(t, row) {
   const a = row.answer || {};
   if (typeof a.notes !== 'undefined' && (typeof a.notes !== 'string' || a.notes.length > 2000)) return '备注过长';
@@ -38,6 +45,7 @@ function updateProgress() {
 }
 function capture() {
   if (!pack || !current()) return;
+  stopTiming(); startTiming(current());
   const t = current(), row = taskAnswers(t), form = new FormData($('form'));
   for (const q of t.questions) {
     if (q.type === 'multi') row.answer[q.key] = form.getAll(q.key);
@@ -105,6 +113,7 @@ function renderImages() {
   $('startPolygon').disabled = drawing !== null;
 }
 function render() {
+  stopTiming();
   const t = current(); if (!t) return;
   drawing = null; $('taskTitle').textContent = t.title; $('taskHelp').textContent = t.help || '';
   $('form').replaceChildren();
@@ -126,7 +135,7 @@ function render() {
     $('form').append(field);
   }
   $('notes').value = a.notes || ''; $('error').textContent = ''; $('previous').disabled = position === 0;
-  $('phase').value = String(phaseIndex); renderImages(); updateProgress();
+  $('phase').value = String(phaseIndex); renderImages(); updateProgress(); startTiming(t);
 }
 function openWorkspace() { $('welcome').hidden = true; $('prerequisite').hidden = true; $('workspace').hidden = false; render(); }
 function install(manifest, imageUrls) {
@@ -140,7 +149,8 @@ function install(manifest, imageUrls) {
   try { unlocked ||= localStorage.getItem(completionKey(pack.requires.package_id)) === 'yes'; } catch { /* Import the previous export instead. */ }
   if (unlocked) openWorkspace(); else { $('welcome').hidden = true; $('workspace').hidden = true; $('prerequisite').hidden = false; }
 }
-$('previousResult').onchange = async e => { try { const data = JSON.parse(await e.target.files[0].text()), required = pack.requires; const completed = new Set((data.responses || []).map(r => r.task_id)); if (data.version !== pack.version || data.package_id !== required.package_id || data.reviewer_id !== pack.reviewer_id || data.stage !== pack.stage || !!data.simulated !== !!pack.simulated || !required.task_ids.every(id => completed.has(id))) throw Error('上一组尚未完成或文件不匹配'); try { localStorage.setItem(completionKey(required.package_id), 'yes'); } catch { /* Remains unlocked for this session. */ } openWorkspace(); } catch (err) { $('prerequisiteError').textContent = err.message; } e.target.value = ''; };
+$('previousResult').onchange = async e => { try { const data = JSON.parse(await e.target.files[0].text()), required = pack.requires; const completed = new Set((data.responses || []).map(r => r.task_id)); if (data.version !== pack.version || data.package_id !== required.package_id || data.reviewer_id !== pack.reviewer_id || data.stage !== (required.stage || pack.stage) || !!data.simulated !== !!pack.simulated || !required.task_ids.every(id => completed.has(id))) throw Error('上一组尚未完成或文件不匹配'); try { localStorage.setItem(completionKey(required.package_id), 'yes'); } catch { /* Remains unlocked for this session. */ } openWorkspace(); } catch (err) { $('prerequisiteError').textContent = err.message; } e.target.value = ''; };
+document.addEventListener('visibilitychange', () => { if (!pack || !current()) return; if (document.hidden) { stopTiming(); persist(); } else startTiming(current()); });
 async function loadFolder(files) {
   const manifests = files.filter(f => f.name === 'manifest.json');
   if (manifests.length !== 1) throw Error('请选择包含一个 manifest.json 的完整评阅文件夹');
